@@ -4,8 +4,13 @@ import studentRouter from "./routes/studentRouter.js"
 import userRouter from "./routes/userRouter.js"
 import jwt from "jsonwebtoken"
 import productRouter from "./routes/productRouter.js"
+import cors from "cors"
+import dotenv from "dotenv"
+import orderRouter from "./routes/orderRouter.js"
 
-let mongoURI = "mongodb+srv://admin:123@cluster0.lsam6i7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+dotenv.config()
+
+const mongoURI = process.env.MONGO_URL 
 
 mongoose.connect(mongoURI).then(() => { //connect to mongoDB cluster
     console.log("Connected to Mongo DB Cluster")
@@ -13,7 +18,7 @@ mongoose.connect(mongoURI).then(() => { //connect to mongoDB cluster
 
 let app = express()
 app.use(express.json()) //Express cannot understand JSON data sent from the client.This line tells Express to automatically parse JSON data that comes in the body of an HTTP request.
-
+app.use(cors())//It controls which domains (origins) are allowed to make requests to your backend API.(cross origin resource platform)
 app.use((req, res, next) =>{
 
     const authorizationHeader = req.header("Authorization") 
@@ -22,7 +27,7 @@ app.use((req, res, next) =>{
 
         const token = authorizationHeader.replace("Bearer " , "")
 
-        jwt.verify(token , "secretKey96$2025" ,
+        jwt.verify(token , process.env.JWT_SECRET ,
             (error , content) =>{
 
                 if(content == null){
@@ -45,9 +50,10 @@ app.use((req, res, next) =>{
     }
 })
 
-app.use("/students",studentRouter)
-app.use("/users" , userRouter)
-app.use("/products" , productRouter)
+app.use("/api/students",studentRouter)
+app.use("/api/users" , userRouter)
+app.use("/api/products" , productRouter)
+app.use("/api/orders" , orderRouter)
 
 
 app.listen(3000, () => {

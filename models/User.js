@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
     image: {
         type: String,
         required: true,
-        default: "/default.jpg"
+        default: "/user.png"
     }
 })
 const User = mongoose.model("User", userSchema)

@@ -35,10 +35,15 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    model: {
+        type: String,
+        required: true,
+        default: "Standard"
+    },
     brand: {
         type: String,
         required: true,
-        default: " No Brand "
+        default: " Generic"
     },
     stocks: {
         type: Number,
@@ -51,5 +56,5 @@ const productSchema = new mongoose.Schema({
     }
 })
 
-const Product = mongoose.model("Product" , productSchema) //creates a Model — a class that represents a collection in MongoDB
+const Product = mongoose.model("Product", productSchema) //creates a Model — a class that represents a collection in MongoDB
 export default Product

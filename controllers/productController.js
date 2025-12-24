@@ -1,4 +1,6 @@
-import { json } from "express";
+import {
+    json
+} from "express";
 import Product from "../models/Product.js";
 import {
     isAdmin
@@ -33,39 +35,21 @@ export function createProduct(req, res) {
 }
 export function getAllProducts(req, res) {
 
-    if (isAdmin(req)) {
+    const query = isAdmin(req)
+        ? {}                 // Admin → get everything
+        : { isAvailable: true }  // Others → only available products
 
-        Product.find().then(
-            (products) => {
-                res.json(products)
-            }
-        ).catch(
-            (error) => {
-                res.status(500).json({
-                    message: "Error fetching products",
-                    error: error.message
-                })
-            }
-        )
-
-    } else {
-
-        Product.find({
-            isAvailable: true
-        }).then(
-            (products) => {
-                res.json(products)
-            }
-        ).catch(
-            (error) => {
-                res.status(500).json({
-                    message: "Error fetching products",
-                    error: error.message
-                })
-            }
-        )
-    }
+    Product.find(query)
+        .then(products => res.json(products))
+        .catch(error => {
+            res.status(500).json({
+                message: "Error fetching products",
+                error: error.message
+            })
+        })
 }
+
+
 export function deleteProducts(req, res) {
 
     if (!isAdmin(req)) {
@@ -96,7 +80,9 @@ export function updateProducts(req, res) {
     }
 
     const productID = req.params.productID
-    Product.updateOne({productID: productID}, req.body).then(
+    Product.updateOne({
+        productID: productID
+    }, req.body).then(
         () => {
             res.json({
                 message: "Product updated successfully"
@@ -104,25 +90,60 @@ export function updateProducts(req, res) {
         })
 }
 
-export function getProductID(req , res){
+export function getProductID(req, res) {
     const productID = req.params.productID
 
-    Product.findOne({productID : productID}).then(
-        (product)=>{
-            if(product == null){
+    Product.findOne({
+        productID: productID
+    }).then(
+        (product) => {
+            if (product == null) {
                 res.status(404).json({
-                    message : "Product not found"
+                    message: "Product not found"
                 })
-            }else{
-                res,json(product)
+            } else {
+                if(product.isAvailable){
+                    res.json(product)
+                }else{
+                    if(isAdmin(req)){
+                        res.json(product)
+                    }else{
+                        res.status(404).json({
+                            message: "Product not found"
+                        })
+                    }
+                }
             }
         }
     ).catch(
-        (error)=>{
+        (error) => {
             res.status(500).json({
-                message : " Error fetching product",
-                error : error.message
+                message: " Error fetching product",
+                error: error.message
             })
         }
     )
+}
+
+export async function searchProducts(req,res) {
+    const query = req.params.query
+    try{
+        const products = await Product.find(
+            {
+                $or :[
+                {name : {$regex : query , $options : "i"}},
+                {altName :{$elemMatch : {$regex : query , $options : "i"}}}
+                ],
+                
+                isAvailable : true
+            }
+        )
+        return res.json(products)
+    }catch(error){
+        res.status(500).json({
+                message: "Error fetching products",
+                error: error.message
+            })
+
+    }
 }
